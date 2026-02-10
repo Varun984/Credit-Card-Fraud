@@ -1,0 +1,13 @@
+# Data
+data/
+*.csv
+
+# Models
+models/
+*.pkl
+*.joblib
+
+# Logs / outputs
+*.log
+logs/
+output/
