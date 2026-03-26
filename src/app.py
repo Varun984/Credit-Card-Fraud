@@ -8,12 +8,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from xgboost import XGBClassifier, plot_importance
 import joblib
-
-
-
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from config.paths import DATA_DIR, MODELS_DIR
 
 # Load data
-df = pd.read_csv(r'creditcard-fraud-detection\data\PS_20174392719_1491204439457_log.csv')
+df = pd.read_csv(DATA_DIR / 'data.csv')
 
 # Split features and target
 X = df.drop(["isFraud"], axis=1)
@@ -36,7 +37,7 @@ X_train_encoded[categorical_cols] = encoder.transform(X_train[categorical_cols])
 X_test_encoded[categorical_cols] = encoder.transform(X_test[categorical_cols])
 
 # Save encoder
-joblib.dump(encoder, 'ordinal_encoder.pkl')
+joblib.dump(encoder, MODELS_DIR / 'ordinal_encoder.pkl')
 # XGBoost: adjust class imbalance
 scale_pos_weight = len(Y_train[Y_train == 0]) / len(Y_train[Y_train == 1])
 xgb = XGBClassifier(eval_metric='logloss', scale_pos_weight=scale_pos_weight, random_state=42)
@@ -56,4 +57,4 @@ auc = roc_auc_score(Y_test, y_probs)
 print("AUC Score:", auc)
 
 # Save model
-joblib.dump(xgb, 'xgb_model.pkl')
+joblib.dump(xgb, MODELS_DIR / 'xgb_model.pkl')

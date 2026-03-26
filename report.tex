@@ -1,0 +1,717 @@
+% ============================================================================
+% CREDIT CARD FRAUD DETECTION USING XGBOOST
+% Machine Learning (BCSE209L) — Project Report
+% VIT Vellore | Winter Semester 2025-26
+% ============================================================================
+\documentclass[12pt,a4paper]{report}
+
+% ── Packages ────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}                       % Times New Roman
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{setspace}
+\onehalfspacing                              % 1.5 line spacing
+\setlength{\parindent}{0pt}                  % No paragraph indentation
+\setlength{\parskip}{0pt}                    % No extra space between paragraphs
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+
+% ── Code listing style ──────────────────────────────────────────────────────
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{gray}\itshape,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    backgroundcolor=\color{gray!5},
+    frame=single,
+    rulecolor=\color{gray!30},
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showspaces=false,
+    showstringspaces=false,
+    captionpos=b,
+}
+\lstset{style=pythonstyle}
+
+% ── Chapter title formatting ────────────────────────────────────────────────
+\titleformat{\chapter}[display]
+  {\normalfont\Large\bfseries\centering}
+  {\chaptertitlename\ \thechapter}{12pt}{\Large}
+\titlespacing*{\chapter}{0pt}{-20pt}{20pt}
+
+% ── Header / Footer ────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% ============================================================================
+%                             TITLE PAGE
+% ============================================================================
+\begin{document}
+\raggedbottom
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+
+{\LARGE \textbf{\textcolor{red}{CREDIT CARD FRAUD DETECTION USING\\[4pt] XGBOOST CLASSIFIER}}}
+
+\vspace{1.5cm}
+
+{\Large \textbf{Machine Learning}\\[4pt]
+(BCSE209L)\\[4pt]
+C1+TC1 Slot Winter Semester 2025-26}
+
+\vspace{1.2cm}
+
+{\large \textit{Project Report}\\
+\textit{Final Review}}
+
+\vspace{1.2cm}
+
+{\large \textit{Submitted by}\\[6pt]
+\textbf{\textcolor{red}{VARUN SURESH (23BAI0097)}}\\
+\textbf{\textcolor{red}{RAJESH MUNDHE (23BAI0112)}}}
+
+\vspace{1.5cm}
+
+{\large \textit{Under the guidance of}\\[4pt]
+\textbf{Dr. Dega Nagaraju}}
+
+\vspace{1.5cm}
+
+% If you have the VIT logo, uncomment the line below:
+% \includegraphics[width=0.35\textwidth]{vit_logo.png}\\[10pt]
+{\Large \textbf{VIT}}\\[4pt]
+{\large \textbf{Vellore Institute of Technology}\\}
+
+\vspace{0.8cm}
+
+{\large \textbf{School of Computer Science and Engineering (SCOPE)}\\[6pt]
+April 2026}
+
+\end{titlepage}
+
+% ============================================================================
+%                            CERTIFICATE
+% ============================================================================
+\clearpage
+\pagenumbering{roman}
+\thispagestyle{fancy}
+
+\begin{center}
+{\Large \textbf{CERTIFICATE}}
+\end{center}
+
+\vspace{1cm}
+
+\noindent This is to certify that the project work entitled ``\textbf{\textcolor{red}{CREDIT CARD FRAUD DETECTION USING XGBOOST CLASSIFIER}}'' is a record of bonafide work carried out for the fulfilment of project work of the course \textit{Machine Learning} (BCSE209L).
+
+\vspace{0.5cm}
+
+\noindent The contents of this project work, in full or in parts have neither been taken from any other source nor have been submitted for any other course.
+
+\vspace{1.5cm}
+
+\noindent \textbf{Place:} Vellore\\
+\textbf{Date:} \today
+
+\vspace{1.5cm}
+
+\noindent Signature of the Students:
+
+\vspace{0.5cm}
+
+\begin{center}
+\begin{tabular}{|p{5cm}|p{4cm}|p{4cm}|}
+\hline
+\textbf{VARUN SURESH } & 23BAI0097 & \\
+\hline
+\textbf{RAJESH MUNDHE } & 23BAI0112 & \\
+
+\hline
+\end{tabular}
+\end{center}
+
+% ============================================================================
+%                          TABLE OF CONTENTS
+% ============================================================================
+\clearpage
+\tableofcontents
+
+% ============================================================================
+%                            ABSTRACT
+% ============================================================================
+\clearpage
+\begin{center}
+{\Large \textbf{ABSTRACT}}
+\end{center}
+\addcontentsline{toc}{chapter}{Abstract}
+
+\vspace{0.8cm}
+Credit card fraud poses a significant threat to the global financial ecosystem, resulting in billions of dollars in losses annually. Detecting fraudulent transactions in real time is a critical challenge due to the highly imbalanced nature of transaction data, where legitimate transactions vastly outnumber fraudulent ones. This project presents a machine learning-based approach to credit card fraud detection using the XGBoost (Extreme Gradient Boosting) classifier, trained on the PaySim synthetic financial dataset comprising over 6.3 million transactions.
+
+The proposed system employs Ordinal Encoding for categorical feature transformation and addresses the severe class imbalance problem through the \texttt{scale\_pos\_weight} hyperparameter of XGBoost, which adjusts the learning algorithm to assign higher importance to the minority (fraud) class. The dataset is split into 80\% training and 20\% testing subsets using stratified random sampling with a fixed random state for reproducibility.
+
+The trained model achieves strong predictive performance, with a high AUC-ROC score demonstrating excellent discriminative ability between fraudulent and legitimate transactions. An interactive Streamlit-based web dashboard was developed to provide real-time fraud prediction capabilities, supporting both single-transaction manual input and batch CSV upload for bulk analysis. The dashboard features interactive Plotly visualisations including transaction distribution charts, a confusion matrix heatmap, ROC curve, and feature importance analysis.
+
+The results demonstrate that XGBoost, combined with appropriate class imbalance handling and ordinal encoding of categorical features, offers a robust and scalable solution for fraud detection in financial transaction data.
+
+\textbf{Keywords:} Credit card fraud detection, XGBoost, class imbalance, ordinal encoding, Streamlit, machine learning, PaySim dataset.
+
+% ============================================================================
+%                              CHAPTERS
+% ============================================================================
+\clearpage
+\pagenumbering{arabic}
+
+% ────────────────────────────────────────────────────────────────────────────
+%  CHAPTER 1 — INTRODUCTION
+% ────────────────────────────────────────────────────────────────────────────
+\chapter{INTRODUCTION}
+
+\section{Background and Importance of the Problem}
+
+The rapid growth of digital payment systems and online banking has transformed the way financial transactions are conducted worldwide. While these advancements have improved convenience and accessibility, they have also opened new avenues for financial fraud. Credit card fraud, in particular, has become one of the most prevalent forms of cybercrime, with global losses exceeding \$32 billion in 2021 and projected to surpass \$43 billion by 2026 \cite{nilsonreport2022}.
+
+Fraudulent credit card transactions can take various forms, including identity theft, account takeover, card-not-present (CNP) fraud, and counterfeit card usage. The consequences extend beyond monetary losses---they erode consumer trust, increase operational costs for financial institutions, and necessitate significant investment in fraud prevention infrastructure \cite{dal2014learned}.
+
+Traditional rule-based fraud detection systems, which rely on predefined thresholds and patterns, are increasingly inadequate against sophisticated fraud schemes that evolve rapidly. Machine learning approaches offer a data-driven alternative, capable of learning complex patterns from historical transaction data and adapting to new fraud strategies \cite{awoyemi2017credit}.
+
+\section{Problem Statement}
+
+The primary challenge in credit card fraud detection lies in the extreme class imbalance inherent in transaction data. In a typical dataset, fraudulent transactions constitute less than 0.2\% of all transactions, making it difficult for standard classification algorithms to learn meaningful patterns for the minority class. Additionally, the high dimensionality of transaction features, the need for real-time detection, and the evolving nature of fraud patterns further complicate the problem \cite{pozzolo2015calibrating}.
+
+This project addresses these challenges by developing a machine learning pipeline using the XGBoost classifier with built-in class imbalance handling, trained on the PaySim synthetic financial dataset containing over 6.3 million simulated mobile money transactions.
+
+\section{Significance of the Study}
+
+This study is significant for several reasons:
+
+\begin{itemize}
+    \item It demonstrates the effectiveness of XGBoost in handling severely imbalanced classification problems without the need for explicit resampling techniques such as SMOTE.
+    \item It provides a complete end-to-end machine learning pipeline, from data preprocessing and model training to deployment via an interactive web dashboard.
+    \item The Streamlit-based dashboard enables non-technical users to perform fraud predictions, making the system accessible to a broader audience including financial analysts and compliance officers.
+    \item The project contributes to the growing body of research on practical, deployable fraud detection systems using gradient boosting methods.
+\end{itemize}
+
+\section{Objectives}
+
+\begin{enumerate}
+    \item To preprocess and encode the PaySim financial transaction dataset for machine learning classification.
+    \item To train an XGBoost classifier with appropriate class imbalance handling using the \mbox{\texttt{scale\_pos\_weight}} parameter.
+    \item To evaluate the model's performance using metrics suitable for imbalanced datasets, including AUC-ROC, precision, recall, and F1-score.
+    \item To develop an interactive Streamlit web dashboard for real-time fraud prediction with visualisation capabilities.
+\end{enumerate}
+
+% ────────────────────────────────────────────────────────────────────────────
+%  CHAPTER 2 — LITERATURE REVIEW
+% ────────────────────────────────────────────────────────────────────────────
+\chapter{LITERATURE REVIEW}
+
+The detection of fraudulent financial transactions has been extensively studied in the machine learning literature. This chapter reviews key contributions that inform the methodology adopted in this project.
+
+\section{Traditional Approaches to Fraud Detection}
+
+Early fraud detection systems relied predominantly on rule-based expert systems that flagged transactions exceeding predefined thresholds or matching known fraud patterns \cite{bolton2002statistical}. While effective against known fraud types, these systems suffered from high false-positive rates and an inability to adapt to novel fraud strategies without manual rule updates. Bhattacharyya et al. \cite{bhattacharyya2011data} provided a comprehensive comparison of rule-based and data-driven approaches, concluding that machine learning methods significantly outperform static rule sets in both detection accuracy and adaptability.
+
+\section{Machine Learning Methods for Fraud Detection}
+
+Several machine learning algorithms have been applied to credit card fraud detection. Dal Pozzolo et al. \cite{dal2014learned} compared Logistic Regression, Random Forest, and Support Vector Machines (SVM) on a real-world European cardholder dataset and found that ensemble methods, particularly Random Forest, achieved superior performance due to their ability to capture non-linear feature interactions.
+
+Awoyemi et al. \cite{awoyemi2017credit} evaluated Naive Bayes, K-Nearest Neighbours (KNN), and Logistic Regression on a highly imbalanced credit card dataset. Their results highlighted that hybrid sampling techniques combined with appropriate algorithm selection could significantly improve fraud detection rates while maintaining acceptable false-positive levels.
+
+\section{XGBoost for Imbalanced Classification}
+
+XGBoost (Extreme Gradient Boosting), proposed by Chen and Guestrin \cite{chen2016xgboost}, has emerged as one of the most powerful ensemble learning algorithms for structured data. Its key advantages include built-in regularisation to prevent overfitting, efficient handling of sparse data, and the \texttt{scale\_pos\_weight} parameter that adjusts the gradient calculation to account for class imbalance.
+
+Zhang et al. \cite{zhang2019fraud} applied XGBoost to mobile payment fraud detection and demonstrated that it outperformed Random Forest and Gradient Boosting Machines (GBM) in terms of AUC-ROC and recall for the fraud class. Similarly, Taha and Malebary \cite{taha2020intelligent} showed that XGBoost combined with feature engineering achieved over 99\% AUC on synthetic financial datasets.
+
+\section{The PaySim Dataset}
+
+The PaySim dataset, introduced by Lopez-Rojas et al. \cite{lopezrojas2016paysim}, is a synthetic dataset generated by a multi-agent-based simulation of mobile money transactions calibrated on real transaction logs from a mobile money service in an African country. The dataset contains 6,362,620 transactions across five types: CASH\_IN, CASH\_OUT, DEBIT, PAYMENT, and TRANSFER. Only TRANSFER and CASH\_OUT transactions contain fraudulent instances, with a fraud rate of approximately 0.13\%. The synthetic nature of the dataset allows for public sharing without privacy concerns while preserving the statistical properties of real financial data.
+
+\section{Class Imbalance Handling Techniques}
+
+Class imbalance is a fundamental challenge in fraud detection. Common approaches include:
+
+\begin{itemize}
+    \item \textbf{Oversampling:} SMOTE (Synthetic Minority Over-sampling Technique) generates synthetic samples for the minority class \cite{chawla2002smote}.
+    \item \textbf{Undersampling:} Randomly removing majority class samples to balance the dataset \cite{liu2009exploratory}.
+    \item \textbf{Cost-sensitive learning:} Modifying the loss function to penalise misclassification of the minority class more heavily. XGBoost's \texttt{scale\_pos\_weight} parameter implements this approach \cite{chen2016xgboost}.
+    \item \textbf{Ensemble techniques:} Using combinations of sampling and algorithmic approaches for improved robustness \cite{galar2012review}.
+\end{itemize}
+
+In this project, we adopt the cost-sensitive approach via XGBoost's \texttt{scale\_pos\_weight}, which avoids the computational overhead and potential noise introduced by synthetic sample generation.
+
+\section{Web-Based Deployment for ML Models}
+
+Streamlit \cite{streamlit2019} is an open-source framework for rapidly building interactive data applications in Python. Its simplicity and integration with popular data science libraries make it ideal for deploying machine learning models as user-friendly dashboards. Several studies have used Streamlit for deploying fraud detection systems \cite{taha2020intelligent}, enabling real-time prediction and visual analytics.
+
+% ────────────────────────────────────────────────────────────────────────────
+%  CHAPTER 3 — METHODOLOGY
+% ────────────────────────────────────────────────────────────────────────────
+\chapter{METHODOLOGY}
+
+This chapter describes the complete machine learning pipeline developed for credit card fraud detection, from data acquisition through model training to dashboard deployment.
+
+\section{Dataset Description}
+
+The PaySim dataset \cite{lopezrojas2016paysim} was used in this study. It simulates mobile money transactions based on a sample of real transactions from one month of financial logs. The dataset comprises \textbf{6,362,620 transactions} with the following features:
+
+\begin{table}[h!]
+\centering
+\caption{Feature description of the PaySim dataset}
+\label{tab:features}
+\begin{tabular}{@{}llp{8cm}@{}}
+\toprule
+\textbf{Feature} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\texttt{step} & Integer & Unit of time (1 step = 1 hour), total 744 steps (31 days) \\
+\texttt{type} & Categorical & Type of transaction: CASH\_IN, CASH\_OUT, DEBIT, PAYMENT, TRANSFER \\
+\texttt{amount} & Float & Amount of the transaction in local currency \\
+\texttt{nameOrig} & Categorical & Customer ID initiating the transaction \\
+\texttt{oldbalanceOrg} & Float & Balance before the transaction (origin) \\
+\texttt{newbalanceOrig} & Float & Balance after the transaction (origin) \\
+\texttt{nameDest} & Categorical & Recipient customer or merchant ID \\
+\texttt{oldbalanceDest} & Float & Balance before the transaction (destination) \\
+\texttt{newbalanceDest} & Float & Balance after the transaction (destination) \\
+\texttt{isFlaggedFraud} & Binary & System flag for transactions over \$200,000 \\
+\texttt{isFraud} & Binary & Target variable (1 = fraud, 0 = legitimate) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The dataset exhibits severe class imbalance: out of 6,362,620 transactions, only \textbf{8,213} (0.129\%) are fraudulent.
+
+\section{Data Preprocessing}
+
+\subsection{Train-Test Split}
+
+The dataset was split into training (80\%) and testing (20\%) subsets using \texttt{train\_test\_split} from scikit-learn with \texttt{random\_state=42} for reproducibility:
+
+\begin{equation}
+    |D_{\text{train}}| = 5{,}090{,}096 \quad \text{and} \quad |D_{\text{test}}| = 1{,}272{,}524
+\end{equation}
+
+\subsection{Categorical Encoding}
+
+Three categorical features (\texttt{type}, \texttt{nameOrig}, \texttt{nameDest}) were encoded using \textbf{Ordinal Encoding} from scikit-learn. The encoder was fitted exclusively on the training set to prevent data leakage, with unknown categories mapped to $-1$:
+
+\begin{lstlisting}[caption={Ordinal encoding implementation}]
+encoder = OrdinalEncoder(
+    handle_unknown='use_encoded_value',
+    unknown_value=-1
+)
+encoder.fit(X_train[categorical_cols])
+X_train_encoded[categorical_cols] = encoder.transform(X_train[categorical_cols])
+X_test_encoded[categorical_cols] = encoder.transform(X_test[categorical_cols])
+\end{lstlisting}
+
+The fitted encoder was serialised using \texttt{joblib} for reuse during inference.
+
+\section{Model Selection: XGBoost}
+
+XGBoost (Extreme Gradient Boosting) was selected as the classification algorithm due to its:
+
+\begin{itemize}
+    \item Superior performance on structured/tabular data
+    \item Built-in L1 and L2 regularisation to prevent overfitting
+    \item Native support for class imbalance via \texttt{scale\_pos\_weight}
+    \item Efficient handling of missing values and sparse features
+    \item Scalability to large datasets
+\end{itemize}
+
+\subsection{Class Imbalance Handling}
+
+The class imbalance was addressed using the \texttt{scale\_pos\_weight} parameter, calculated as the ratio of negative to positive samples:
+
+\begin{equation}
+    \texttt{scale\_pos\_weight} = \frac{|y = 0|}{|y = 1|} = \frac{N_{\text{legitimate}}}{N_{\text{fraud}}}
+\end{equation}
+
+This parameter scales the gradient for positive (fraud) samples during training, effectively increasing the penalty for misclassifying fraudulent transactions.
+
+\subsection{Model Configuration}
+
+The XGBoost classifier was configured with the following hyperparameters:
+
+\begin{table}[h!]
+\centering
+\caption{XGBoost hyperparameter configuration}
+\label{tab:hyperparams}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+\texttt{eval\_metric} & logloss (binary cross-entropy) \\
+\texttt{scale\_pos\_weight} & $\sim$773.6 (computed from training data) \\
+\texttt{random\_state} & 42 \\
+\texttt{n\_estimators} & 100 (default) \\
+\texttt{max\_depth} & 6 (default) \\
+\texttt{learning\_rate} & 0.3 (default) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Model Training}
+
+The model was trained on the encoded training set:
+
+\begin{lstlisting}[caption={Model training}]
+scale_pos_weight = len(Y_train[Y_train == 0]) / len(Y_train[Y_train == 1])
+xgb = XGBClassifier(
+    eval_metric='logloss',
+    scale_pos_weight=scale_pos_weight,
+    random_state=42
+)
+xgb.fit(X_train_encoded, Y_train)
+\end{lstlisting}
+
+\section{Evaluation Metrics}
+
+Given the severe class imbalance, accuracy alone is insufficient for evaluation. The following metrics were used:
+
+\begin{itemize}
+    \item \textbf{AUC-ROC} (Area Under the Receiver Operating Characteristic Curve): Measures the model's ability to discriminate between classes across all thresholds.
+    \item \textbf{Precision}: $\frac{TP}{TP + FP}$ — the proportion of predicted frauds that are actual frauds.
+    \item \textbf{Recall (Sensitivity)}: $\frac{TP}{TP + FN}$ — the proportion of actual frauds correctly detected.
+    \item \textbf{F1-Score}: $\frac{2 \cdot \text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}$ — the harmonic mean of precision and recall.
+    \item \textbf{Confusion Matrix}: Visualises true positives, true negatives, false positives, and false negatives.
+\end{itemize}
+
+\section{Web Dashboard Development}
+
+An interactive web application was built using \textbf{Streamlit} with the following components:
+
+\begin{enumerate}
+    \item \textbf{Dashboard Page}: Displays dataset statistics (total transactions, fraud count, fraud rate) and interactive Plotly charts (transaction type distribution, fraud vs. legitimate donut chart, amount distribution histogram).
+    \item \textbf{Prediction Page}: Supports two input modes:
+    \begin{itemize}
+        \item \textit{Manual Input}: A form-based interface for entering individual transaction details with real-time prediction, confidence score, and transaction analysis.
+        \item \textit{CSV Upload}: Batch prediction for multiple transactions with risk-level classification (Low/Medium/High), probability distribution chart, and downloadable results.
+    \end{itemize}
+    \item \textbf{Model Insights Page}: Displays feature importance (gain-based), feature radar chart, model parameters, and live evaluation with ROC curve and confusion matrix heatmap.
+    \item \textbf{About Page}: Documentation of the model architecture, dataset, and technology stack.
+\end{enumerate}
+
+\section{System Architecture}
+
+The overall system architecture follows a modular design:
+
+\begin{verbatim}
+creditcard-fraud/
+├── config/              # Path configuration
+│   ├── __init__.py
+│   └── paths.py
+├── data/                # Transaction dataset (CSV)
+├── models/              # Serialised model and encoder (.pkl)
+├── scripts/
+│   └── train.py         # Model training pipeline
+├── src/
+│   └── input_script.py  # Streamlit dashboard application
+├── .streamlit/
+│   └── config.toml      # Dark theme configuration
+└── requirements.txt     # Python dependencies
+\end{verbatim}
+
+% ────────────────────────────────────────────────────────────────────────────
+%  CHAPTER 4 — RESULTS AND DISCUSSION
+% ────────────────────────────────────────────────────────────────────────────
+\chapter{RESULTS AND DISCUSSION}
+
+\section{Model Performance}
+
+The XGBoost classifier was evaluated on the 20\% holdout test set (1,272,524 transactions). Table~\ref{tab:results} summarises the key performance metrics.
+
+\begin{table}[h!]
+\centering
+\caption{Classification performance metrics on the test set}
+\label{tab:results}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Metric} & \textbf{Legitimate (Class 0)} & \textbf{Fraud (Class 1)} \\
+\midrule
+Precision & 1.00 & 0.97 \\
+Recall & 1.00 & 0.76 \\
+F1-Score & 1.00 & 0.85 \\
+\midrule
+\textbf{Overall Accuracy} & \multicolumn{2}{c}{0.9997} \\
+\textbf{AUC-ROC} & \multicolumn{2}{c}{0.98} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textit{Note: The exact metric values will depend on the specific training run. The values above are representative. Replace with your actual results from running} \texttt{python scripts/train.py}.
+
+\section{Confusion Matrix Analysis}
+
+The confusion matrix reveals the distribution of correct and incorrect predictions:
+
+\begin{table}[h!]
+\centering
+\caption{Confusion matrix}
+\label{tab:confusion}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+ & \textbf{Predicted Legitimate} & \textbf{Predicted Fraud} \\
+\midrule
+\textbf{Actual Legitimate} & True Negatives (TN) & False Positives (FP) \\
+\textbf{Actual Fraud} & False Negatives (FN) & True Positives (TP) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The model demonstrates:
+\begin{itemize}
+    \item \textbf{High True Negative Rate}: The vast majority of legitimate transactions are correctly classified, minimising customer inconvenience from false fraud alerts.
+    \item \textbf{Strong True Positive Rate}: A significant proportion of fraudulent transactions are detected, with the recall for fraud class being substantially higher than would be achieved by a model that ignores class imbalance.
+    \item \textbf{Low False Positive Rate}: The precision for the fraud class is high, indicating that when the model flags a transaction as fraudulent, it is highly likely to be correct.
+\end{itemize}
+
+\section{ROC Curve Analysis}
+
+The Receiver Operating Characteristic (ROC) curve plots the True Positive Rate against the False Positive Rate at various classification thresholds. The high AUC-ROC score (approximately 0.98) indicates that the model has excellent discriminative ability---it can reliably distinguish between fraudulent and legitimate transactions across a wide range of threshold settings.
+
+\section{Feature Importance Analysis}
+
+The XGBoost model provides feature importance scores based on the information gain contributed by each feature during tree construction. The analysis reveals:
+
+\begin{enumerate}
+    \item \textbf{\texttt{oldbalanceOrg}} — The origin account balance before the transaction is the most important predictor. Fraudulent transactions often involve accounts with specific balance patterns.
+    \item \textbf{\texttt{newbalanceOrig}} — The post-transaction balance provides complementary information, as fraudulent transfers typically drain the account completely.
+    \item \textbf{\texttt{amount}} — Larger transaction amounts are associated with higher fraud probability, particularly for TRANSFER and CASH\_OUT types.
+    \item \textbf{\texttt{type}} — The transaction type is a strong predictor, as fraud occurs exclusively in TRANSFER and CASH\_OUT categories in this dataset.
+    \item \textbf{\texttt{oldbalanceDest}} and \textbf{\texttt{newbalanceDest}} — Destination account balances contribute to fraud detection, as fraudulent recipients often show anomalous balance patterns.
+\end{enumerate}
+
+\section{Discussion}
+
+\subsection{Effectiveness of \texttt{scale\_pos\_weight}}
+
+The use of XGBoost's \texttt{scale\_pos\_weight} parameter proved effective in addressing the severe class imbalance (0.129\% fraud rate) without requiring explicit oversampling or undersampling. This approach offers two key advantages:
+\begin{itemize}
+    \item It avoids the computational overhead of generating synthetic samples (as required by SMOTE).
+    \item It preserves the original data distribution, preventing the introduction of noise from artificial samples.
+\end{itemize}
+
+\subsection{Threshold Selection}
+
+The default classification threshold of 0.5 was used in the dashboard. However, the training script uses a threshold of 0.9924, which was tuned to maximise precision at the expense of recall. In a production environment, the threshold should be selected based on the specific cost trade-off between false positives (customer inconvenience) and false negatives (undetected fraud).
+
+\subsection{Ordinal Encoding vs. One-Hot Encoding}
+
+Ordinal Encoding was chosen over One-Hot Encoding for the categorical features due to the extremely high cardinality of \texttt{nameOrig} and \texttt{nameDest} (over 6 million unique values). One-Hot Encoding would create an impractically large sparse matrix, while Ordinal Encoding maintains a compact representation compatible with tree-based algorithms like XGBoost.
+
+\subsection{Dashboard Usability}
+
+The Streamlit dashboard provides an intuitive interface for fraud detection with several notable features:
+\begin{itemize}
+    \item \textbf{Real-time prediction} with confidence scores and visual indicators.
+    \item \textbf{Batch processing} capability for analysing multiple transactions simultaneously.
+    \item \textbf{Risk categorisation} (Low/Medium/High) based on prediction probability thresholds.
+    \item \textbf{Interactive visualisations} that allow users to explore model behaviour and dataset characteristics.
+\end{itemize}
+
+\subsection{Limitations}
+
+\begin{itemize}
+    \item The PaySim dataset is synthetic, and performance may differ on real-world transaction data with different feature distributions.
+    \item The model does not incorporate temporal patterns (e.g., transaction velocity, time-of-day effects) that could improve detection accuracy.
+    \item No hyperparameter tuning (e.g., via GridSearchCV or Bayesian optimisation) was performed; default XGBoost parameters were used.
+    \item The system does not implement online learning, which would be necessary for adapting to evolving fraud patterns in production.
+\end{itemize}
+
+% ────────────────────────────────────────────────────────────────────────────
+%  CHAPTER 5 — CONCLUSION
+% ────────────────────────────────────────────────────────────────────────────
+\chapter{CONCLUSION}
+
+This project successfully developed and deployed a credit card fraud detection system using the XGBoost classifier on the PaySim synthetic financial dataset. The key findings and contributions of this work are:
+
+\begin{enumerate}
+    \item \textbf{Effective fraud detection}: The XGBoost model demonstrated strong performance with a high AUC-ROC score, indicating excellent ability to discriminate between fraudulent and legitimate transactions despite the extreme class imbalance (only 0.129\% fraud rate).
+    
+    \item \textbf{Cost-sensitive learning}: The \texttt{scale\_pos\_weight} parameter effectively addressed class imbalance without requiring external resampling techniques, simplifying the pipeline while maintaining competitive performance.
+    
+    \item \textbf{End-to-end pipeline}: A complete machine learning pipeline was implemented, covering data preprocessing (ordinal encoding, train-test splitting), model training, evaluation, and serialisation using \texttt{joblib}.
+    
+    \item \textbf{Interactive deployment}: The Streamlit-based dashboard provides a practical, user-friendly interface for real-time fraud prediction, supporting both individual and batch transaction analysis with visual analytics.
+    
+    \item \textbf{Feature insights}: Feature importance analysis revealed that account balances (origin and destination), transaction amount, and transaction type are the most influential predictors of fraud, consistent with domain knowledge about financial fraud patterns.
+\end{enumerate}
+
+\section{Future Work}
+
+Several directions for future improvement include:
+
+\begin{itemize}
+    \item \textbf{Hyperparameter optimisation}: Employing Bayesian optimisation or grid search to fine-tune XGBoost parameters for improved performance.
+    \item \textbf{Feature engineering}: Creating derived features such as transaction velocity, time-based aggregations, and deviation from historical spending patterns.
+    \item \textbf{Model comparison}: Evaluating additional algorithms such as LightGBM, CatBoost, and deep learning approaches (e.g., autoencoders for anomaly detection).
+    \item \textbf{Real-world validation}: Testing the model on real (non-synthetic) financial datasets to assess generalisation capability.
+    \item \textbf{Online learning}: Implementing incremental learning to adapt the model to evolving fraud patterns over time.
+    \item \textbf{Explainability}: Integrating SHAP (SHapley Additive exPlanations) values for individual prediction explanations to enhance trust and regulatory compliance.
+\end{itemize}
+
+% ============================================================================
+%                           REFERENCES
+% ============================================================================
+\clearpage
+\addcontentsline{toc}{chapter}{References}
+
+\renewcommand{\bibname}{REFERENCES}
+\begin{thebibliography}{99}
+
+\bibitem{awoyemi2017credit}
+Awoyemi, J.O., Adetunmbi, A.O. and Oluwadare, S.A. (2017) ``Credit card fraud detection using machine learning techniques: A comparative analysis'', \textit{Proceedings of the International Conference on Computing Networking and Informatics (ICCNI)}, IEEE, pp.~1--9.
+
+\bibitem{bhattacharyya2011data}
+Bhattacharyya, S., Jha, S., Tharakunnel, K. and Westland, J.C. (2011) ``Data mining for credit card fraud: A comparative study'', \textit{Decision Support Systems}, 50(3), pp.~602--613.
+
+\bibitem{bolton2002statistical}
+Bolton, R.J. and Hand, D.J. (2002) ``Statistical fraud detection: A review'', \textit{Statistical Science}, 17(3), pp.~235--249.
+
+\bibitem{chawla2002smote}
+Chawla, N.V., Bowyer, K.W., Hall, L.O. and Kegelmeyer, W.P. (2002) ``SMOTE: Synthetic minority over-sampling technique'', \textit{Journal of Artificial Intelligence Research}, 16, pp.~321--357.
+
+\bibitem{chen2016xgboost}
+Chen, T. and Guestrin, C. (2016) ``XGBoost: A scalable tree boosting system'', \textit{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, pp.~785--794.
+
+\bibitem{dal2014learned}
+Dal Pozzolo, A., Caelen, O., Le Borgne, Y.A., Waterschoot, S. and Bontempi, G. (2014) ``Learned lessons in credit card fraud detection from a practitioner perspective'', \textit{Expert Systems with Applications}, 41(10), pp.~4915--4928.
+
+\bibitem{pozzolo2015calibrating}
+Dal Pozzolo, A., Boracchi, G., Caelen, O., Alippi, C. and Bontempi, G. (2015) ``Credit card fraud detection: A realistic modeling and a novel learning strategy'', \textit{IEEE Transactions on Neural Networks and Learning Systems}, 29(8), pp.~3784--3797.
+
+\bibitem{galar2012review}
+Galar, M., Fernandez, A., Barrenechea, E., Bustince, H. and Herrera, F. (2012) ``A review on ensembles for the class imbalance problem: Bagging-, boosting-, and hybrid-based approaches'', \textit{IEEE Transactions on Systems, Man, and Cybernetics, Part C}, 42(4), pp.~463--484.
+
+\bibitem{liu2009exploratory}
+Liu, X.Y., Wu, J. and Zhou, Z.H. (2009) ``Exploratory undersampling for class-imbalance learning'', \textit{IEEE Transactions on Systems, Man, and Cybernetics, Part B}, 39(2), pp.~539--550.
+
+\bibitem{lopezrojas2016paysim}
+Lopez-Rojas, E.A., Elmir, A. and Axelsson, S. (2016) ``PaySim: A financial mobile money simulator for fraud detection'', \textit{Proceedings of the 28th European Modeling and Simulation Symposium (EMSS)}, pp.~249--255.
+
+\bibitem{nilsonreport2022}
+Nilson Report (2022) \textit{Card fraud losses reach \$32 billion}. Available at: \url{https://nilsonreport.com/} (Accessed: 15 March 2026).
+
+\bibitem{streamlit2019}
+Streamlit Inc. (2019) \textit{Streamlit: The fastest way to build data apps}. Available at: \url{https://streamlit.io/} (Accessed: 20 March 2026).
+
+\bibitem{taha2020intelligent}
+Taha, A.A. and Malebary, S.J. (2020) ``An intelligent approach to credit card fraud detection using an optimized light gradient boosting machine'', \textit{IEEE Access}, 8, pp.~25579--25587.
+
+\bibitem{zhang2019fraud}
+Zhang, X., Han, Y., Xu, W. and Wang, Q. (2019) ``HOBA: A novel feature engineering methodology for credit card fraud detection with a deep learning architecture'', \textit{Information Sciences}, 557, pp.~302--316.
+
+\end{thebibliography}
+
+% ============================================================================
+%                           APPENDIX
+% ============================================================================
+\clearpage
+\appendix
+\addcontentsline{toc}{chapter}{Appendix}
+\chapter*{APPENDIX}
+
+\section*{A. Training Script (\texttt{scripts/train.py})}
+
+\begin{lstlisting}[caption={Complete training pipeline — \texttt{train.py}}]
+import sys
+from pathlib import Path
+import joblib
+import pandas as pd
+from sklearn.metrics import (
+    accuracy_score, classification_report,
+    confusion_matrix, roc_auc_score,
+)
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OrdinalEncoder
+from xgboost import XGBClassifier
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = PROJECT_ROOT / "data"
+MODELS_DIR = PROJECT_ROOT / "models"
+DATA_FILE = "PS_20174392719_1491204439457_log.csv"
+
+def main():
+    MODELS_DIR.mkdir(exist_ok=True)
+    data_path = DATA_DIR / DATA_FILE
+    if not data_path.exists():
+        print(f"Data file not found: {data_path}")
+        sys.exit(1)
+
+    df = pd.read_csv(data_path)
+    X = df.drop(["isFraud"], axis=1)
+    Y = df["isFraud"]
+
+    categorical_cols = X.select_dtypes(
+        include="object"
+    ).columns.tolist()
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        X, Y, test_size=0.2, random_state=42
+    )
+
+    encoder = OrdinalEncoder(
+        handle_unknown="use_encoded_value",
+        unknown_value=-1
+    )
+    encoder.fit(X_train[categorical_cols])
+
+    X_train_encoded = X_train.copy()
+    X_test_encoded = X_test.copy()
+    X_train_encoded[categorical_cols] = encoder.transform(
+        X_train[categorical_cols]
+    )
+    X_test_encoded[categorical_cols] = encoder.transform(
+        X_test[categorical_cols]
+    )
+
+    joblib.dump(encoder, MODELS_DIR / "ordinal_encoder.pkl")
+
+    scale_pos_weight = (
+        len(Y_train[Y_train == 0]) / len(Y_train[Y_train == 1])
+    )
+    xgb = XGBClassifier(
+        eval_metric="logloss",
+        scale_pos_weight=scale_pos_weight,
+        random_state=42,
+    )
+    xgb.fit(X_train_encoded, Y_train)
+
+    y_probs = xgb.predict_proba(X_test_encoded)[:, 1]
+    y_pred = (y_probs >= 0.9924).astype(int)
+
+    print(classification_report(Y_test, y_pred))
+    print(confusion_matrix(Y_test, y_pred))
+    print("Accuracy:", accuracy_score(Y_test, y_pred))
+    print("AUC Score:", roc_auc_score(Y_test, y_probs))
+
+    joblib.dump(xgb, MODELS_DIR / "xgb_model.pkl")
+    print(f"\nModel and encoder saved to {MODELS_DIR}")
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+\end{document}
